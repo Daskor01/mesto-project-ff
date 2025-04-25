@@ -14,13 +14,13 @@
   </header>
   <main class="content">
     <section class="profile page__section">
-      <div class="profile__image" style="background-image: url('./images/avatar.jpg');"></div>
+      <img class="profile__image" src="<%=require('./images/avatar.jpg')%>"/>
       <div class="profile__info">
         <h1 class="profile__title">Жак-Ив Кусто</h1>
-        <button class="profile__edit-button open-modal" data-modal-target="#modal1" type="button"></button>
+        <button class="profile__edit-button"  type="button"></button>
         <p class="profile__description">Исследователь океана</p>
       </div>
-      <button class="profile__add-button open-modal" data-modal-target="#modal2" type="button"></button>
+      <button class="profile__add-button"  type="button"></button>
     </section>
     <section class="places page__section">
       <ul class="places__list">
@@ -32,7 +32,8 @@
       © 2021 Mesto Russia
     </p>
   </footer>
-  <div class="popup popup_type_edit modal" id="modal1">
+  
+  <div class="popup popup_type_edit">
     <div class="popup__content">
       <button type="button" class="popup__close"></button>
       <h3 class="popup__title">Редактировать профиль</h3>
@@ -43,7 +44,7 @@
       </form>
     </div>
   </div>
-  <div class="popup popup_type_new-card modal" id="modal2">
+  <div class="popup popup_type_new-card">
     <div class="popup__content">
       <button type="button" class="popup__close"></button>
       <h3 class="popup__title">Новое место</h3>
@@ -65,7 +66,7 @@
 
 <template id="card-template">
   <li class="places__item card">
-    <img class="card__image" src="" alt="" />
+    <img class="card__image" src="" alt=""/>
     <button type="button" class="card__delete-button"></button>
     <div class="card__description">
       <h2 class="card__title">

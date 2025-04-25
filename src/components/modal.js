@@ -1,8 +1,8 @@
 import { fillForm } from "./forms"
 
 //Открываем модалку
-function openModal(modalId) {
-  const modal = document.querySelector(modalId)
+function openModal(ElementClass) {
+  const modal = document.querySelector(ElementClass)
   const closeButton = modal.querySelector('.popup__close')
 
   modal.classList.add('popup_is-opened')
@@ -12,7 +12,7 @@ function openModal(modalId) {
   //Закрываем по нажатию клавиши Esc
   document.addEventListener('keydown', (event) => {
     if(event.key === 'Escape') {
-      closeModal(modalId)
+      closeModal(modal)
     }
   })
 
@@ -21,21 +21,31 @@ function openModal(modalId) {
     const modalContent = modal.querySelector('.popup__content')
     const clickInside = modalContent.contains(event.target)
     if(!clickInside) {
-      closeModal(modalId)
+      closeModal(modal)
     }
   })
 
   //Закрываем по кнопке
   closeButton.addEventListener('click', () => {
-    closeModal(modalId)
+    closeModal(modal)
   })
 }
 
 //Закрываем модалку
-function closeModal (modalId) {
-  const modal = document.querySelector(modalId)
+function closeModal(modal) {
   modal.classList.add('popup_is-animated')
   modal.classList.remove('popup_is-opened')
 }
 
-export {openModal, closeModal}
+//Функция просмотра изображения
+function showImage(link, name) {
+  const modalImage = document.querySelector('.popup__image')
+  const modalText = document.querySelector('.popup__caption')
+
+  modalImage.src = link
+  modalText.textContent = name
+
+  openModal('.popup_type_image')
+}
+
+export {openModal, closeModal, showImage}
