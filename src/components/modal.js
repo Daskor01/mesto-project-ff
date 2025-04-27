@@ -1,51 +1,72 @@
-import { fillForm } from "./forms"
+//Элементы формы профиля
+const profile = {
+  name: document.querySelector('.profile__title'),
+  description: document.querySelector('.profile__description')
+}
+
+//Модалки
+const modals = {
+  edit: document.querySelector('.popup_type_edit'),
+  addCard: document.querySelector('.popup_type_new-card'),
+  showImage: document.querySelector('.popup_type_image')
+}
+
+//Добавляем анимации всем модалкам
+Object.values(modals).forEach(modal => {
+  modal.classList.add('popup_is-animated')
+})
+
+//Элементы формы
+const editForm = {
+  form: document.forms['edit-profile'],
+  nameInput: document.querySelector('.popup__input_type_name'),
+  jobInput: document.querySelector('.popup__input_type_description')
+}
 
 //Открываем модалку
-function openModal(ElementClass) {
-  const modal = document.querySelector(ElementClass)
-  const closeButton = modal.querySelector('.popup__close')
-
+function openModal(modal) {
   modal.classList.add('popup_is-opened')
-  
-  fillForm()
+  document.addEventListener('keydown', closeByEsc)
+} 
 
-  //Закрываем по нажатию клавиши Esc
-  document.addEventListener('keydown', (event) => {
-    if(event.key === 'Escape') {
-      closeModal(modal)
-    }
-  })
+//Закрываем по нажатию клавиши Esc
+function closeByEsc(evt) {
+  if (evt.key === "Escape") {
+    const openedPopup = document.querySelector('.popup_is-opened')
+    closeModal(openedPopup)
+  }
+} 
 
-  //Закрываем модалку по клику вне
-  modal.addEventListener('click', (event) => {
-    const modalContent = modal.querySelector('.popup__content')
-    const clickInside = modalContent.contains(event.target)
-    if(!clickInside) {
-      closeModal(modal)
-    }
-  })
-
-  //Закрываем по кнопке
-  closeButton.addEventListener('click', () => {
-    closeModal(modal)
-  })
+//Закрываем по клику вне
+function closeByOutside(evt) {
+    if (evt.target === evt.currentTarget) {
+    closeModal(evt.currentTarget)
+  }
 }
 
 //Закрываем модалку
 function closeModal(modal) {
-  modal.classList.add('popup_is-animated')
   modal.classList.remove('popup_is-opened')
+  document.removeEventListener('keydown', closeByEsc)
 }
 
-//Функция просмотра изображения
-function showImage(link, name) {
-  const modalImage = document.querySelector('.popup__image')
-  const modalText = document.querySelector('.popup__caption')
-
-  modalImage.src = link
-  modalText.textContent = name
-
-  openModal('.popup_type_image')
+//Присваиваем поля форме
+function fillForm() {
+  editForm.nameInput.value = profile.name.textContent;
+  editForm.jobInput.value = profile.description.textContent;
 }
 
-export {openModal, closeModal, showImage}
+// Обработчик 'отправки' формы
+function submitEditForm(evt) {
+  //Отменяем отправку формы
+  evt.preventDefault();
+
+  //Обновляем поля и закрываем форму
+  profile.name.textContent = editForm.nameInput.value
+  profile.description.textContent = editForm.jobInput.value
+    
+  closeModal(modals.edit)
+}
+
+export {openModal, closeModal, submitEditForm, fillForm, closeByOutside}
+
