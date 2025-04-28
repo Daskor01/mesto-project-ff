@@ -1,13 +1,14 @@
 import './index.css';
 
 import { initialCards } from './components/cards.js'
-import { createCard, likeCard, removeCard, addNewCard } from './components/card.js'
-import { openModal, submitEditForm, fillForm, closeModal, closeByOutside} from './components/modal.js'
+import { createCard, likeCard, removeCard } from './components/card.js'
+import { openModal, closeModal} from './components/modal.js'
 
 
 //Получаем элементы из DOM
 const template = document.querySelector('#card-template')
 const cardList = document.querySelector('.places__list')
+const popups = document.querySelectorAll('.popup')
 
 //Модалки
 const modals = {
@@ -39,6 +40,24 @@ const forms = {
   edit: document.forms['edit-profile']
 }
 
+//Элементы форм
+const addCardForm = {
+  form: document.forms['new-place'],
+  url: document.querySelector('.popup__input_type_url'),
+  name: document.querySelector('.popup__input_type_card-name')
+}
+
+const profile = {
+  name: document.querySelector('.profile__title'),
+  description: document.querySelector('.profile__description')
+}
+
+const editForm = {
+  form: document.forms['edit-profile'],
+  nameInput: document.querySelector('.popup__input_type_name'),
+  jobInput: document.querySelector('.popup__input_type_description')
+}
+
 //Добавление карточек в DOM
 initialCards.forEach((obj) => {
   cardList.appendChild(createCard(template, obj, removeCard, likeCard, showImage))
@@ -56,30 +75,22 @@ modalAddCard.openButton.addEventListener('click', () => {
   openModal(modals.addCard)
 })
 
-//Закрываем по клику на кнопку
-modalEdit.closeButton.addEventListener('click', () => {
-  closeModal(modals.edit)
-})
+//Закрываем окна
+popups.forEach((popup) => {
+  const closeButton = popup.querySelector('.popup__close')
 
-modalAddCard.closeButton.addEventListener('click', () => {
-  closeModal(modals.addCard)
-})
+  //Закрываем по клику на кнопку
+  closeButton.addEventListener('click', () => closeModal(popup))
 
-modalShowImage.closeButton.addEventListener('click', () => {
-  closeModal(modals.showImage)
-})
+  //Закрываем модалку по клику вне
+  popup.addEventListener('mousedown', (event) => {
+    if (event.target === event.currentTarget) {
+      closeModal(popup)
+    }  
+  })
 
-//Закрываем модалку по клику вне
-modals.edit.addEventListener('click', (event) => {
-  closeByOutside(event)
-})
-
-modals.addCard.addEventListener('click', (event) => {
-  closeByOutside(event)
-})
-
-modals.showImage.addEventListener('click', (event) => {
-  closeByOutside(event)
+  //Анимация окон
+  popup.classList.add('popup_is-animated')
 })
 
 //Отправляем формы
@@ -95,4 +106,49 @@ function showImage(link, name) {
   modalShowImage.image.alt = name
   modalShowImage.text.textContent = name
   openModal(modals.showImage)
+}
+
+//Создаем новую карточку
+function addNewCard(evt, template, showImage, closeModal) {
+  //Отменяем отправку формы
+  evt.preventDefault()
+
+  //Объект с данными новой карточки
+  const newCardData = {
+    name: addCardForm.name.value,
+    link: addCardForm.url.value
+  }
+
+  //Новая карточка
+  const newCard = createCard(
+    template, 
+    newCardData, 
+    removeCard, 
+    likeCard, 
+    showImage
+  )
+
+  cardList.prepend(newCard)
+
+  addCardForm.form.reset()
+
+  closeModal(modals.addCard)
+}
+
+//Присваиваем поля форме
+function fillForm() {
+  editForm.nameInput.value = profile.name.textContent;
+  editForm.jobInput.value = profile.description.textContent;
+}
+
+// Обработчик 'отправки' формы
+function submitEditForm(evt) {
+  //Отменяем отправку формы
+  evt.preventDefault();
+
+  //Обновляем поля и закрываем форму
+  profile.name.textContent = editForm.nameInput.value
+  profile.description.textContent = editForm.jobInput.value
+    
+  closeModal(modals.edit)
 }
