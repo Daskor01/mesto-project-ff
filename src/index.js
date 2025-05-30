@@ -1,9 +1,14 @@
-import './index.css';
+import './index.css'
 
-import { initialCards } from './components/cards.js'
-import { createCard, likeCard, removeCard } from './components/card.js'
+import { createCard, removeCard } from './components/card.js'
 import { openModal, closeModal} from './components/modal.js'
-
+import { enableValidation, clearValidation } from './components/validation.js'
+import { 
+  getUserInfo, getInitialCards, 
+  updateUserProfile, updateUserImage,
+  addNewCardToServer, deleteCardFromServer, 
+  removeCardLike, addCardLike 
+} from './components/api.js'
 
 //Получаем элементы из DOM
 const template = document.querySelector('#card-template')
@@ -14,18 +19,22 @@ const popups = document.querySelectorAll('.popup')
 const modals = {
   edit: document.querySelector('.popup_type_edit'),
   addCard: document.querySelector('.popup_type_new-card'),
-  showImage: document.querySelector('.popup_type_image')
+  showImage: document.querySelector('.popup_type_image'),
+  confirm: document.querySelector('.popup_confirm'),
+  profileImage: document.querySelector('.popup_new-image')
 }
 
 //Элементы модалок
 const modalEdit = {
   openButton: document.querySelector('.profile__edit-button'),
-  closeButton: modals.edit.querySelector('.popup__close')
+  closeButton: modals.edit.querySelector('.popup__close'),
+  saveButton: modals.edit.querySelector('.popup__button')
 }
 
 const modalAddCard = {
   openButton: document.querySelector('.profile__add-button'),
-  closeButton: modals.addCard.querySelector('.popup__close')
+  closeButton: modals.addCard.querySelector('.popup__close'),
+  saveButton: modals.addCard.querySelector('.popup__button')
 }
 
 const modalShowImage = {
@@ -34,10 +43,20 @@ const modalShowImage = {
   closeButton: modals.showImage.querySelector('.popup__close')
 }
 
+const modalConfirm = {
+  confirmButton: document.querySelector('.popup_confirm__button')
+}
+
+const modalProfileImage = {
+  saveButton: modals.profileImage.querySelector('.popup__button')
+}
+
+
 //Формы
 const forms = {
   addCard: document.forms['new-place'],
-  edit: document.forms['edit-profile']
+  edit: document.forms['edit-profile'],
+  profileImage: document.forms['new-image']
 }
 
 //Элементы форм
@@ -49,7 +68,9 @@ const addCardForm = {
 
 const profile = {
   name: document.querySelector('.profile__title'),
-  description: document.querySelector('.profile__description')
+  description: document.querySelector('.profile__description'),
+  image: document.querySelector('.profile__image'),
+  overlay: document.querySelector('.profile__overlay')
 }
 
 const editForm = {
@@ -58,22 +79,118 @@ const editForm = {
   jobInput: document.querySelector('.popup__input_type_description')
 }
 
-//Добавление карточек в DOM
-initialCards.forEach((obj) => {
-  cardList.appendChild(createCard(template, obj, removeCard, likeCard, showImage))
-})
+//Объект настроек валидации
+const validationConfig = {
+  formSelector: '.popup__form',
+  inputSelector: '.popup__input',
+  submitButtonSelector: '.popup__button',
+  inactiveButtonClass: 'popup__button_disabled',
+  inputErrorClass: 'popup__input_type_error',
+  errorClass: 'popup__error_visible'
+}
+
+//Отрисовываем страницу
+
+//Переменная для id текущего пользователя
+let currentUserId = null
+
+async function initialPage() {
+  try {
+    //Получаем данные
+    const [userData, initialCards] = await Promise.all([
+      getUserInfo(),
+      getInitialCards()
+    ])
+
+    currentUserId = userData._id
+
+    //Устанавливаем данные пользователя
+    profile.name.textContent = userData.name
+    profile.description.textContent = userData.about
+    profile.image.src = userData.avatar
+
+    //Отрисовываем карточки
+    renderCards(initialCards)
+    
+  } catch (error) {
+    console.error("Ошибка инициализации:", error)
+  }
+}
+
+initialPage()
+
+function renderCards(cards) {
+  cardList.innerHTML = ''
+
+  //Проверяем что получили массив
+  if (Array.isArray(cards)) {
+    cards.forEach(card => {
+      cardList.appendChild(
+        createCard(
+          template, 
+          card,
+          handleLikeClick, showImage, 
+          currentUserId,
+          handleDeleteClick,
+        )
+      )
+    })
+  } else {
+    console.error("Ожидался массив карточек, получено:", cards)
+  }
+}
 
 //Прослушиватели
 
 //Открываем по клику на кнопку
 modalEdit.openButton.addEventListener('click', () => {
-  openModal(modals.edit)
   fillForm()
+  openModal(modals.edit)
+  clearValidation(forms.edit, validationConfig)
 })
 
 modalAddCard.openButton.addEventListener('click', () => {
   openModal(modals.addCard)
+  addCardForm.form.reset()
+  clearValidation(forms.addCard, validationConfig)
 })
+
+profile.overlay.addEventListener('click', () => {
+  openModal(modals.profileImage)
+})
+
+//Удаляем карточку
+let cardIdToDelete = null
+let cardElementToDelete = null
+
+function handleDeleteClick(cardId, cardElement) {
+  cardIdToDelete = cardId
+  cardElementToDelete = cardElement
+  openModal(modals.confirm)
+}
+
+modalConfirm.confirmButton.addEventListener('click', () => {
+  if (cardIdToDelete && cardElementToDelete) {
+    deleteCardFromServer(cardIdToDelete)
+    removeCard(cardElementToDelete)
+  } 
+  closeModal(modals.confirm)
+})
+
+//Лайк карточки
+function handleLikeClick(cardId, buttonElement, counter) {
+  const isLiked = buttonElement.classList.contains('card__like-button_is-active')
+  const toggleLike = isLiked ? removeCardLike : addCardLike
+
+  toggleLike(cardId)
+    .then((updatedCard) => {
+      buttonElement.classList.toggle('card__like-button_is-active')
+      counter.textContent = updatedCard.likes.length
+    })
+    .catch((err) => {
+      console.error('Ошибка при лайке карточки:', err)
+    })
+}
 
 //Закрываем окна
 popups.forEach((popup) => {
@@ -98,7 +215,27 @@ forms.edit.addEventListener('submit', submitEditForm)
 
 forms.addCard.addEventListener('submit', (evt) => {
   addNewCard(evt, template, showImage, closeModal)
-});
+})
+
+forms.profileImage.addEventListener('submit', (evt) => {
+  evt.preventDefault()
+
+  const url = forms.profileImage.link.value
+
+  setLoadingState(modalProfileImage.saveButton, true, 'Сохранение...')
+
+  updateUserImage(url)
+  .then(url => {
+    profile.image.src = url.avatar
+    closeModal(modals.profileImage)
+  })
+  .catch((err) => {
+    console.error('Ошибка при обновлении изображения:', err)
+  })
+  .finally(() => {
+    setLoadingState(modalProfileImage.saveButton, false)
+  })
+})
 
 //Функция просмотра изображения
 function showImage(link, name) {
@@ -109,46 +246,94 @@ function showImage(link, name) {
 }
 
 //Создаем новую карточку
-function addNewCard(evt, template, showImage, closeModal) {
-  //Отменяем отправку формы
+function addNewCard (
+  evt, 
+  template, 
+  showImage, 
+  closeModal
+) {
+
   evt.preventDefault()
 
   //Объект с данными новой карточки
   const newCardData = {
     name: addCardForm.name.value,
-    link: addCardForm.url.value
+    link: addCardForm.url.value,
+    likes: [],
+    owner: {
+      _id: currentUserId
+    }
   }
 
-  //Новая карточка
-  const newCard = createCard(
-    template, 
-    newCardData, 
-    removeCard, 
-    likeCard, 
-    showImage
-  )
+  setLoadingState(modalAddCard.saveButton, true, 'Сохранение...')
 
-  cardList.prepend(newCard)
+  addNewCardToServer(newCardData, currentUserId)
+    .then((cardFromServer) => {
+      const newCard = createCard(
+        template,
+        cardFromServer,
+        handleLikeClick,
+        showImage,
+        currentUserId,
+        handleDeleteClick
+      )
 
-  addCardForm.form.reset()
-
-  closeModal(modals.addCard)
+      cardList.prepend(newCard)
+      addCardForm.form.reset()
+      closeModal(modals.addCard)
+    })
+    .catch((err) => {
+      console.error('Ошибка при добавлении карточки:', err)
+    })
+    .finally(() => {
+      setLoadingState(modalAddCard.saveButton, false)
+    })
 }
 
 //Присваиваем поля форме
 function fillForm() {
-  editForm.nameInput.value = profile.name.textContent;
-  editForm.jobInput.value = profile.description.textContent;
+  editForm.nameInput.value = profile.name.textContent
+  editForm.jobInput.value = profile.description.textContent
 }
 
 // Обработчик 'отправки' формы
 function submitEditForm(evt) {
-  //Отменяем отправку формы
-  evt.preventDefault();
+  evt.preventDefault()
 
-  //Обновляем поля и закрываем форму
-  profile.name.textContent = editForm.nameInput.value
-  profile.description.textContent = editForm.jobInput.value
-    
-  closeModal(modals.edit)
+  const newUserData = {
+    name: editForm.nameInput.value,
+    about: editForm.jobInput.value
+  }
+
+  setLoadingState(modalEdit.saveButton, true, 'Сохранение...')
+
+  updateUserProfile(newUserData)
+  .then((user) => {
+    profile.name.textContent = user.name
+    profile.description.textContent = user.about
+    closeModal(modals.edit)
+  })
+  .catch((err) => {
+    console.error('Ошибка при обновлении профиля:', err)
+  })
+  .finally(() => {
+    setLoadingState(modalEdit.saveButton, false)
+  })
+}
+
+//Вызываем валидацию форм
+enableValidation(validationConfig)
+
+//Состояние кнопки загрузки
+function setLoadingState(button, isLoading, loadingText = 'Сохранение...') {
+  if (!button) return
+
+  if (isLoading) {
+    button.dataset.originalText = button.textContent
+    button.textContent = loadingText
+    button.disabled = true
+  } else {
+    button.textContent = button.dataset.originalText || 'Сохранить'
+    button.disabled = false
+  }
 }
