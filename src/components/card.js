@@ -29,7 +29,7 @@ function createCard (
   })
 
   likeButton.addEventListener('click', () => {
-    handleLikeClick(obj._id, likeButton, likeCounter)
+    handleLikeClick(obj._id, card)
   })
 
   if(obj.owner._id !== userId) {
@@ -52,6 +52,19 @@ function removeCard(element) {
     }
 }
 
-export {createCard, removeCard}
+function isLikedCard(cardElement) {
+  const likeButton = cardElement.querySelector('.card__like-button')
+  return likeButton.classList.contains('card__like-button_is-active')
+}
+
+function updatedCardLike(cardElement, likes) {
+  const likeButton = cardElement.querySelector('.card__like-button')
+  const counter = cardElement.querySelector('.card__like-counter')
+
+  likeButton.classList.toggle('card__like-button_is-active')
+  counter.textContent = likes.length
+}
+
+export {createCard, removeCard, isLikedCard, updatedCardLike}
 
 

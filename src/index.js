@@ -1,6 +1,6 @@
 import './index.css'
 
-import { createCard, removeCard } from './components/card.js'
+import { createCard, removeCard, isLikedCard, updatedCardLike } from './components/card.js'
 import { openModal, closeModal} from './components/modal.js'
 import { enableValidation, clearValidation } from './components/validation.js'
 import { 
@@ -171,21 +171,29 @@ function handleDeleteClick(cardId, cardElement) {
 
 modalConfirm.confirmButton.addEventListener('click', () => {
   if (cardIdToDelete && cardElementToDelete) {
+    setLoadingState(modalConfirm.confirmButton, true, 'Удаление...')
     deleteCardFromServer(cardIdToDelete)
-    removeCard(cardElementToDelete)
+    .then(() => {
+      removeCard(cardElementToDelete)
+      closeModal(modals.confirm)
+    })
+    .catch(err => {
+      console.error('Ошибка при удалении карточки:', err)
+    })
+    .finally(() => {
+      setLoadingState(modalConfirm.confirmButton, false)
+    })
   } 
-  closeModal(modals.confirm)
 })
 
 //Лайк карточки
-function handleLikeClick(cardId, buttonElement, counter) {
-  const isLiked = buttonElement.classList.contains('card__like-button_is-active')
+function handleLikeClick(cardId, cardElement) {
+  const isLiked = isLikedCard(cardElement)
   const toggleLike = isLiked ? removeCardLike : addCardLike
 
   toggleLike(cardId)
-    .then((updatedCard) => {
-      buttonElement.classList.toggle('card__like-button_is-active')
-      counter.textContent = updatedCard.likes.length
+    .then((card) => {
+      updatedCardLike(cardElement, card.likes)
     })
     .catch((err) => {
       console.error('Ошибка при лайке карточки:', err)
@@ -258,16 +266,12 @@ function addNewCard (
   //Объект с данными новой карточки
   const newCardData = {
     name: addCardForm.name.value,
-    link: addCardForm.url.value,
-    likes: [],
-    owner: {
-      _id: currentUserId
-    }
+    link: addCardForm.url.value
   }
 
   setLoadingState(modalAddCard.saveButton, true, 'Сохранение...')
 
-  addNewCardToServer(newCardData, currentUserId)
+  addNewCardToServer(newCardData)
     .then((cardFromServer) => {
       const newCard = createCard(
         template,

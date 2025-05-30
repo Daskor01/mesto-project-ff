@@ -18,18 +18,16 @@ function hideInputError(formElement, inputElement, config) {
 function checkInputValidity(formElement, inputElement, config) {
   inputElement.setCustomValidity('')
 
-  if (inputElement.validity.valueMissing) {
-    const message = inputElement.dataset.requiredMessage || inputElement.validationMessage
+  if (inputElement.dataset.requiredMessage && inputElement.validity.valueMissing) {
+    const message = inputElement.dataset.requiredMessage
+    inputElement.setCustomValidity(message)
+  }  
+  else if (inputElement.dataset.typeMismatchMessage && inputElement.validity.typeMismatch) {
+    const message = inputElement.dataset.typeMismatchMessage 
     inputElement.setCustomValidity(message)
   }
-
-  if (inputElement.validity.typeMismatch) {
-    const message = inputElement.dataset.typeMismatchMessage || inputElement.validationMessage
-    inputElement.setCustomValidity(message)
-  }
-
-  if (inputElement.validity.patternMismatch) {
-    const message = inputElement.dataset.errorMessage || inputElement.validationMessage
+  else if (inputElement.dataset.errorMessage && inputElement.validity.patternMismatch) {
+    const message = inputElement.dataset.errorMessage
     inputElement.setCustomValidity(message)
   }
 

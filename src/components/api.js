@@ -6,14 +6,21 @@ const config = {
   }
 }
 
+//Обрабатываем данные
+const getResponseData = (res) => {
+  if (!res.ok) {
+    return Promise.reject(`Ошибка: ${res.status}`)
+  }
+  return res.json()
+}
+
 //Загрузка инфо о пользователе
 export const getUserInfo = () => {
   return fetch(`${config.baseUrl}/users/me`, {
     headers: config.headers
   })
     .then(res => {
-      if (res.ok) return res.json()
-      return Promise.reject(`Ошибка: ${res.status}`)
+    return getResponseData(res)
     })
 }
 
@@ -32,8 +39,7 @@ export const updateUserProfile = (userData) => {
     })
   })
   .then(res => {
-    if (res.ok) return res.json()
-    return Promise.reject(`Ошибка: ${res.status}`)
+    return getResponseData(res)
   })
 }
 
@@ -50,8 +56,7 @@ export const updateUserImage = (url) => {
     })
   })
   .then(res => {
-    if (res.ok) return res.json()
-    return Promise.reject(`Ошибка: ${res.status}`)
+    return getResponseData(res)
   })
 }
 
@@ -60,19 +65,13 @@ export const getInitialCards = () => {
   return fetch(`${config.baseUrl}/cards`, {
     headers: config.headers
   })
-    .then(res => {
-      if (res.ok) {
-        return res.json()
-      }
-      return Promise.reject(`Ошибка: ${res.status}`)
-    })
-    .then(cards => {
-      return cards
-    })
+  .then(res => {
+    return getResponseData(res)
+  })
 }
 
 //Добавляем новую карточку на сервер
-export const addNewCardToServer = (cardData, userId) => {
+export const addNewCardToServer = (cardData) => {
   return fetch(`${config.baseUrl}/cards`, {
     method: 'POST',
     headers: {
@@ -81,27 +80,22 @@ export const addNewCardToServer = (cardData, userId) => {
     },
     body: JSON.stringify({
       name: cardData.name,
-      link: cardData.link,
-      owner: {
-        _id: userId._id
-      }
+      link: cardData.link
     })
   })
   .then(res => {
-    if (res.ok) return res.json()
-    return Promise.reject(`Ошибка: ${res.status}`)
+    return getResponseData(res)
   })
 }
 
 //Удаляем карточку с сервера
 export const deleteCardFromServer = (cardId) => {
-  fetch(`${config.baseUrl}/cards/${cardId}`, {
+  return fetch(`${config.baseUrl}/cards/${cardId}`, {
     method: 'DELETE',
     headers: config.headers
   })
   .then(res => {
-    if (res.ok) return res.json()
-    return Promise.reject(`Ошибка: ${res.status}`)
+    return getResponseData(res)
   })
 }
 
@@ -112,8 +106,7 @@ export const addCardLike = (cardId) => {
     headers: config.headers
   })
   .then(res => {
-    if (res.ok) return res.json()
-    return Promise.reject(`Ошибка: ${res.status}`)
+    return getResponseData(res)
   })
 }
 
@@ -124,8 +117,7 @@ export const removeCardLike = (cardId) => {
     headers: config.headers
   })
   .then(res => {
-    if (res.ok) return res.json()
-    return Promise.reject(`Ошибка: ${res.status}`)
+    return getResponseData(res)
   })
 }
 
