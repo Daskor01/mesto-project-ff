@@ -42,13 +42,17 @@
       <h3 class="popup__title">Редактировать профиль</h3>
       <form class="popup__form" name="edit-profile" novalidate>
         <input type="text" name="name" class="popup__input popup__input_type_name"
-          placeholder="Имя" required minlength="2" maxlength="40" pattern=".*"
-          data-required-message="Вы пропустили это поле" />
+          placeholder="Имя" required minlength="2" 
+          maxlength="40" pattern="^[A-Za-zА-Яа-яЁё\s\-]+$"
+          data-error-message="Разрешены только латинские, кириллические буквы, знаки дефиса и пробелы" />
         <span class="popup__error" id="name-error"></span>
+
         <input type="text" name="description" 
           class="popup__input popup__input_type_description"
-          placeholder="Занятие" required minlength="2" maxlength="200" pattern=".*"
-          data-required-message="Вы пропустили это поле" 
+          placeholder="Занятие" required minlength="2" 
+          maxlength="200" pattern="^[A-Za-zА-Яа-яЁё\s\-]+$"
+          data-required-message="Вы пропустили это поле"
+          data-error-message="Разрешены только латинские, кириллические буквы, знаки дефиса и пробелы" 
         />
         <span class="popup__error" id="description-error"></span>
 
@@ -65,7 +69,6 @@
           class="popup__input popup__input_type_card-name"
           placeholder="Название" required minlength="2" 
           maxlength="30" pattern="^[A-Za-zА-Яа-яЁё\s\-]+$"
-          data-required-message="Вы пропустили это поле"
           data-error-message="Разрешены только латинские, кириллические буквы, знаки дефиса и пробелы" 
         />
         <span class="popup__error" id="place-name-error"></span>
@@ -73,7 +76,6 @@
         <input type="url" name="link" 
           class="popup__input popup__input_type_url"
           placeholder="Ссылка на картинку" required
-          data-required-message="Введите адрес" 
         />
         <span class="popup__error" id="link-error"></span>
 
@@ -103,7 +105,6 @@
         <input type="url" name="link" 
           class="popup__input popup__input_type_url"
           placeholder="Ссылка на картинку" required
-          data-required-message="Введите адрес" 
         />
         <span class="popup__error" id="link-error"></span>
 
